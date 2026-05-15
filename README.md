@@ -71,3 +71,4 @@ export default defineConfig([
   },
 ])
 ```
+# react-vitest-testing
