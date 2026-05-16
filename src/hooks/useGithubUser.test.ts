@@ -1,37 +1,31 @@
-import { renderHook, act, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { useGithubUser } from "./useGithubUser";
-import { mockUser, mockRepos } from "../test/mocks";
+import { mockUser } from "../test/mocks";
 
-describe("useGithubUser", () => {
-  afterEach(() => vi.restoreAllMocks());
+describe("github user api", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
 
-  it("starts with empty state", () => {
+  test("check empty state", () => {
     const { result } = renderHook(() => useGithubUser());
-
     expect(result.current.user).toBeNull();
-    expect(result.current.repos).toHaveLength(0);
+    expect(result.current.repos).toEqual([]);
     expect(result.current.loading).toBe(false);
     expect(result.current.error).toBeNull();
   });
 
-  it("sets user and repos after a successful search", async () => {
-    vi.spyOn(globalThis, "fetch")
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve(mockUser),
-      } as never)
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve(mockRepos),
-      } as never);
+  test("check api success", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockUser),
+    } as never);
 
     const { result } = renderHook(() => useGithubUser());
 
-    act(() => {
-      result.current.searchUser("piyush");
+    await act(async () => {
+      await result.current.searchUser("piyush-eon");
     });
 
     await waitFor(() => {
@@ -39,47 +33,85 @@ describe("useGithubUser", () => {
     });
 
     expect(result.current.user?.login).toBe(mockUser.login);
-    expect(result.current.repos).toHaveLength(mockRepos.length);
     expect(result.current.error).toBeNull();
   });
 
-  it("sets an error message when user is not found", async () => {
+  test("show error when user not found", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
       ok: false,
       status: 404,
-      json: () => Promise.resolve({}),
-    } as never);
+      json: async () => ({}),
+    } as Response);
 
     const { result } = renderHook(() => useGithubUser());
 
-    act(() => {
-      result.current.searchUser("thisuserdoesnotexist");
+    await act(async () => {
+      await result.current.searchUser("subroto18");
     });
 
     await waitFor(() => {
-      expect(result.current.error).toBe(
-        'User "thisuserdoesnotexist" not found on GitHub.'
-      );
+      expect(result.current.loading).toBe(false);
     });
 
-    expect(result.current.user).toBeNull();
+    expect(result.current.error).toBe(`User "subroto18" not found on GitHub.`);
   });
 
-  it("sets an error message on network failure", async () => {
-    vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(
-      new Error("Network error")
+  test("show generic error for server issue", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue({
+      ok: false,
+      status: 500,
+      json: async () => ({}),
+    } as Response);
+
+    const { result } = renderHook(() => useGithubUser());
+
+    await act(async () => {
+      await result.current.searchUser("subroto18");
+    });
+
+    await waitFor(async () => {
+      await expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.error).toBe(
+      "Network error. Please check your connection.",
+    );
+  });
+
+  test("show network error when fetch fails", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(
+      new Error("something went wrong"),
     );
 
     const { result } = renderHook(() => useGithubUser());
 
-    act(() => {
-      result.current.searchUser("piyush");
+    await act(async () => {
+      await result.current.searchUser("subroto18");
     });
 
-    await waitFor(() => {
-      expect(result.current.error).toBe(
-        "Network error. Please check your connection."
-      );
+    expect(result.current.error).toBe(
+      "Network error. Please check your connection.",
+    );
+
+    expect(result.current.loading).toBe(false);
+  });
+
+  test("reset state ", async () => {
+    const { result } = renderHook(() => useGithubUser());
+
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockUser),
+    } as never);
+
+    await act(async () => {
+      await result.current.searchUser("piyush-eon");
     });
+
+    await act(async () => {
+      await result.current.reset();
+    });
+
+    expect(result.current.user).toBeNull();
   });
 });

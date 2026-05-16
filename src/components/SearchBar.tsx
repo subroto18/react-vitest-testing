@@ -28,6 +28,7 @@ export default function SearchBar({ onSearch, loading }: Props) {
     <form onSubmit={handleSubmit} className="search-form">
       <div className="search-input-wrapper">
         <svg
+          data-testid="search-icon"
           className="search-icon"
           viewBox="0 0 24 24"
           fill="none"
@@ -65,13 +66,18 @@ export default function SearchBar({ onSearch, loading }: Props) {
           </p>
         )}
       </div>
+
       <button
         type="submit"
         className="search-btn"
         disabled={loading}
         aria-label="Search"
       >
-        {loading ? <span className="spinner" /> : "Search"}
+        {loading ? (
+          <span data-testid="spinner" className="spinner" />
+        ) : (
+          "Search"
+        )}
       </button>
     </form>
   );

@@ -1,21 +1,20 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import RepoList from "./RepoList";
 import { mockRepos } from "../test/mocks";
 
-describe("RepoList", () => {
-  it("renders the correct number of repos", () => {
+describe("Repolist render", () => {
+  test("render the corrent number of repos", () => {
     render(<RepoList repos={mockRepos} />);
 
-    const repoLinks = screen.getAllByRole("link");
-    expect(repoLinks).toHaveLength(mockRepos.length);
+    const links = screen.getAllByRole("link");
+    expect(links).toHaveLength(mockRepos.length);
   });
 
-  it("shows empty state message when repos array is empty", () => {
+  test("render the empty repo", () => {
     render(<RepoList repos={[]} />);
 
-    expect(
-      screen.getByText(/no public repositories found/i)
-    ).toBeInTheDocument();
+    const links = screen.getByText("No public repositories found.");
+    expect(links).toBeInTheDocument();
   });
 });

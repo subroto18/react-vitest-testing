@@ -1,38 +1,40 @@
 import { render, screen } from "@testing-library/react";
+
+import { describe, test, expect } from "vitest";
 import UserCard from "./UserCard";
 import { mockUser, mockUserMinimal } from "../test/mocks";
-import { describe, expect, it } from "vitest";
 import { formatNumber } from "../utils/formatNumber";
 
-describe("UserCard", () => {
-  it("renders name, login, bio and location", () => {
+describe("User card", () => {
+  test("renders name , login, bio and location", () => {
     render(<UserCard user={mockUser} />);
-
-    expect(screen.getByText(mockUser.name!)).toBeInTheDocument();
-    expect(screen.getByText(`@${mockUser.login}`)).toBeInTheDocument();
-    expect(screen.getByText(mockUser.bio!)).toBeInTheDocument();
-    expect(screen.getByText(mockUser.location!)).toBeInTheDocument();
+    const userName = screen.getByText(mockUser.name);
+    const login = screen.getByText(`@${mockUser.login}`);
+    const bio = screen.getByText(mockUser.bio);
+    const location = screen.getByText(mockUser.location);
+    expect(userName).toBeInTheDocument();
+    expect(login).toBeInTheDocument();
+    expect(bio).toBeInTheDocument();
+    expect(location).toBeInTheDocument();
   });
 
-  it("renders follower and repo stats correctly", () => {
+  test("renders repo , followers and following counts", () => {
     render(<UserCard user={mockUser} />);
+    const repo = screen.getByText(formatNumber(mockUser.public_repos));
+    const followers = screen.getByText(formatNumber(mockUser.followers));
+    const followings = screen.getByText(formatNumber(mockUser.following));
 
-    // Assert using formatNumber so it always matches no matter what mock values you use
-    expect(
-      screen.getByText(formatNumber(mockUser.public_repos)),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(formatNumber(mockUser.followers)),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(formatNumber(mockUser.following)),
-    ).toBeInTheDocument();
+    expect(repo).toBeInTheDocument();
+    expect(followers).toBeInTheDocument();
+    expect(followings).toBeInTheDocument();
   });
 
-  it("does not render bio or location when they are null", () => {
+  test("check bio, location and name null or not", () => {
     render(<UserCard user={mockUserMinimal} />);
+    const name = screen.queryByText(/full stack/i);
+    const location = screen.queryByText("India");
 
-    expect(screen.queryByText(mockUser.bio!)).not.toBeInTheDocument();
-    expect(screen.queryByText(mockUser.location!)).not.toBeInTheDocument();
+    expect(name).not.toBeInTheDocument();
+    expect(location).not.toBeInTheDocument();
   });
 });

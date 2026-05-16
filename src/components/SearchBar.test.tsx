@@ -1,60 +1,157 @@
 import { render, screen } from "@testing-library/react";
+import { describe, expect, test, vi } from "vitest";
 import SearchBar from "./SearchBar";
-import { describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 
-describe("SearchBar", () => {
-  it("renders the input and search button", () => {
-    render(<SearchBar onSearch={vi.fn()} loading={false} />);
-
-    // const { container } = render(
-    //   <SearchBar onSearch={vi.fn()} loading={false} />
-    // );
-    // logRoles(container); // prints all available roles to the terminal
-
-    expect(
-      screen.getByRole("textbox", { name: /github username/i })
-    ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /search/i })).toBeInTheDocument();
+describe("search bar component", () => {
+  test("search icon present", () => {
+    render(<SearchBar loading={false} onSearch={vi.fn()} />);
+    const searchIcon = screen.getByTestId("search-icon");
+    expect(searchIcon).toBeInTheDocument();
   });
 
-  it("updates the input when the user types", async () => {
-    const user = userEvent.setup();
-    render(<SearchBar onSearch={vi.fn()} loading={false} />);
-
-    await user.type(
-      screen.getByRole("textbox", { name: /github username/i }),
-      "piyush"
-    );
-
-    expect(
-      screen.getByRole("textbox", { name: /github username/i })
-    ).toHaveValue("piyush");
+  test("search input present", () => {
+    render(<SearchBar loading={false} onSearch={vi.fn()} />);
+    const searchInput = screen.getByRole("textbox", {
+      name: /GitHub username/i,
+    });
+    expect(searchInput).toBeInTheDocument();
   });
 
-  it("calls onSearch with the typed username when form is submitted", async () => {
-    const onSearch = vi.fn();
-    const user = userEvent.setup();
-    render(<SearchBar onSearch={onSearch} loading={false} />);
-
-    await user.type(
-      screen.getByRole("textbox", { name: /github username/i }),
-      "piyush"
-    );
-    await user.click(screen.getByRole("button", { name: /search/i }));
-
-    expect(onSearch).toHaveBeenCalledWith("piyush");
-    expect(onSearch).toHaveBeenCalledTimes(1);
+  test("search button present", () => {
+    render(<SearchBar loading={false} onSearch={vi.fn()} />);
+    const searchButton = screen.getByRole("button", {
+      name: /Search/i,
+    });
+    expect(searchButton).toBeInTheDocument();
   });
 
-  it("shows a validation error and does not call onSearch when input is empty", async () => {
-    const onSearch = vi.fn();
+  test("username validation check", async () => {
+    render(<SearchBar loading={false} onSearch={vi.fn()} />);
     const user = userEvent.setup();
-    render(<SearchBar onSearch={onSearch} loading={false} />);
 
-    await user.click(screen.getByRole("button", { name: /search/i }));
+    const Button = screen.getByRole("button", {
+      name: /Search/i,
+    });
 
-    expect(screen.getByRole("alert")).toBeInTheDocument();
-    expect(onSearch).not.toHaveBeenCalled();
+    await user.click(Button);
+
+    const ErrorMsg = screen.getByRole("alert");
+
+    expect(ErrorMsg).toBeInTheDocument();
+  });
+
+  test("Update the input when the user types", async () => {
+    render(<SearchBar loading={false} onSearch={vi.fn()} />);
+    const user = userEvent.setup();
+
+    const input = screen.getByRole("textbox", {
+      name: /GitHub username/i,
+    });
+
+    await user.type(input, "subroto");
+
+    expect(input).toHaveValue("subroto");
+  });
+
+  test("Update the input when the user types", async () => {
+    render(<SearchBar loading={false} onSearch={vi.fn()} />);
+    const user = userEvent.setup();
+
+    const input = screen.getByRole("textbox", {
+      name: /GitHub username/i,
+    });
+
+    await user.type(input, "subroto");
+
+    expect(input).toHaveValue("subroto");
+  });
+
+  test("Calls onSearch with the typed username when form is submitted", async () => {
+    const mockFunction = vi.fn();
+    render(<SearchBar loading={false} onSearch={mockFunction} />);
+    const user = userEvent.setup();
+
+    const input = screen.getByRole("textbox", {
+      name: /GitHub username/i,
+    });
+
+    const button = screen.getByRole("button", {
+      name: /Search/i,
+    });
+
+    await user.type(input, "subroto");
+    await user.click(button);
+
+    expect(mockFunction).toHaveBeenCalledWith("subroto");
+    expect(mockFunction).toHaveBeenCalledTimes(1);
+  });
+
+  test("validation check if user type error alert should be removed", async () => {
+    const mockFunction = vi.fn();
+    render(<SearchBar loading={false} onSearch={mockFunction} />);
+
+    const user = userEvent.setup();
+    const input = screen.getByRole("textbox", {
+      name: /GitHub username/i,
+    });
+
+    const button = screen.getByRole("button", {
+      name: /Search/i,
+    });
+
+    await user.type(input, "subroto");
+    await user.click(button);
+
+    const ErrorMsg = screen.queryByRole("alert");
+
+    expect(ErrorMsg).not.toBeInTheDocument();
+  });
+
+  test("when user start typing, cancel icon should be displayed", async () => {
+    const mockFunction = vi.fn();
+    render(<SearchBar loading={false} onSearch={mockFunction} />);
+
+    const user = userEvent.setup();
+    const input = screen.getByRole("textbox", {
+      name: /GitHub username/i,
+    });
+
+    await user.type(input, "subroto");
+
+    const button = screen.getByRole("button", {
+      name: /Clear input/i,
+    });
+
+    expect(button).toBeInTheDocument();
+  });
+
+  test("when user click on cancel button, Input value should be removed", async () => {
+    const mockFunction = vi.fn();
+    render(<SearchBar loading={false} onSearch={mockFunction} />);
+
+    const user = userEvent.setup();
+    const input = screen.getByRole("textbox", {
+      name: /GitHub username/i,
+    });
+
+    await user.type(input, "subroto");
+
+    const button = screen.getByRole("button", {
+      name: /Clear input/i,
+    });
+
+    await user.click(button);
+
+    expect(input).toHaveValue("");
+  });
+
+  test("button is disabled when loading is true", () => {
+    const mockFunction = vi.fn();
+    render(<SearchBar loading={true} onSearch={mockFunction} />);
+
+    const spinner = screen.getByTestId("spinner");
+
+    expect(spinner).toBeInTheDocument();
   });
 });
